@@ -1,0 +1,203 @@
+<script type="text/javascript">
+        var gk_isXlsx = false;
+        var gk_xlsxFileLookup = {};
+        var gk_fileData = {};
+        function filledCell(cell) {
+          return cell !== '' && cell != null;
+        }
+        function loadFileData(filename) {
+        if (gk_isXlsx && gk_xlsxFileLookup[filename]) {
+            try {
+                var workbook = XLSX.read(gk_fileData[filename], { type: 'base64' });
+                var firstSheetName = workbook.SheetNames[0];
+                var worksheet = workbook.Sheets[firstSheetName];
+
+                // Convert sheet to JSON to filter blank rows
+                var jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1, blankrows: false, defval: '' });
+                // Filter out blank rows (rows where all cells are empty, null, or undefined)
+                var filteredData = jsonData.filter(row => row.some(filledCell));
+
+                // Heuristic to find the header row by ignoring rows with fewer filled cells than the next row
+                var headerRowIndex = filteredData.findIndex((row, index) =>
+                  row.filter(filledCell).length >= filteredData[index + 1]?.filter(filledCell).length
+                );
+                // Fallback
+                if (headerRowIndex === -1 || headerRowIndex > 25) {
+                  headerRowIndex = 0;
+                }
+
+                // Convert filtered JSON back to CSV
+                var csv = XLSX.utils.aoa_to_sheet(filteredData.slice(headerRowIndex)); // Create a new sheet from filtered array of arrays
+                csv = XLSX.utils.sheet_to_csv(csv, { header: 1 });
+                return csv;
+            } catch (e) {
+                console.error(e);
+                return "";
+            }
+        }
+        return gk_fileData[filename] || "";
+        }
+        </script><!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Ẩn/Hiện Cột với Hiệu ứng</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      max-width: 1000px;
+      margin: 0 auto;
+      padding: 20px;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 20px;
+    }
+    th, td {
+      border: 1px solid #ddd;
+      padding: 8px;
+      text-align: left;
+      transition: opacity 0.3s ease, background-color 0.3s ease;
+    }
+    th {
+      background-color: #f2f2f2;
+    }
+    .toggle-btn {
+      padding: 10px 20px;
+      background-color: #007bff;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      margin-right: 10px;
+    }
+    .toggle-btn:hover {
+      background-color: #0056b3;
+    }
+    .hidden {
+      opacity: 0.3; /* Làm mờ thay vì ẩn hoàn toàn */
+    }
+    .highlight {
+      background-color: #e6f3ff; /* Màu nền nổi bật cho cột Outline */
+      border: 2px solid #007bff; /* Viền nổi bật */
+    }
+  </style>
+</head>
+<body>
+  <h1>Bảng Dữ Liệu</h1>
+  <button class="toggle-btn" onclick="toggleColumn(1)">Ẩn/Hiện Cột Câu Hỏi</button>
+  <button class="toggle-btn" onclick="toggleColumn(3)">Ẩn/Hiện Cột Câu Trả Lời</button>
+  <button class="toggle-btn" onclick="toggleBothColumns()">Ẩn/Hiện Cả Hai Cột</button>
+
+  <table id="dataTable">
+    <thead>
+      <tr>
+        <th class="col-1">Câu hỏi</th>
+        <th class="col-2">Outline nội dung</th>
+        <th class="col-3">Câu trả lời ngắn gọn</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td class="col-1">Tổng quan về kết quả kinh doanh là gì?</td>
+        <td class="col-2">Thu thập hơn 1000 khách hàng tiềm năng, tỷ lệ chuyển đổi thành công 20%, tiếp tục triển khai chiến lược.</td>
+        <td class="col-3">Doanh thu tăng trưởng 15% so với năm ngoái, tập trung vào mở rộng thị trường mới.</td>
+      </tr>
+      <tr>
+        <td class="col-1">Khu vực nào là trung tâm kinh tế chính tại Việt Nam?</td>
+        <td class="col-2">TP. Hồ Chí Minh dẫn đầu, tiếp theo là Hà Nội và Đà Nẵng, tập trung vào các khu công nghiệp.</td>
+        <td class="col-3">TP. Hồ Chí Minh đóng góp 30% GDP, Hà Nội và Đà Nẵng là các trung tâm phát triển.</td>
+      </tr>
+      <tr>
+        <td class="col-1">Ngành nào chiếm tỷ trọng lớn nhất trong nền kinh tế?</td>
+        <td class="col-2">Công nghiệp chế biến (25%), dịch vụ (22%), và nông nghiệp (18%) là các ngành chủ đạo.</td>
+        <td class="col-3">Công nghiệp chế biến dẫn đầu, tiếp theo là dịch vụ và nông nghiệp, đóng vai trò quan trọng trong xuất khẩu.</td>
+      </tr>
+      <tr>
+        <td class="col-1">Loại hình doanh nghiệp nào phổ biến nhất?</td>
+        <td class="col-2">Doanh nghiệp TNHH chiếm đa số, tiếp theo là công ty cổ phần và doanh nghiệp tư nhân.</td>
+        <td class="col-3">Doanh nghiệp TNHH chiếm 60%, phù hợp với mô hình kinh doanh vừa và nhỏ.</td>
+      </tr>
+      <tr>
+        <td class="col-1">Cơ hội hợp tác quốc tế nằm ở đâu?</td>
+        <td class="col-2">Công nghệ và sản xuất có vốn đầu tư nước ngoài cao, TP. Hồ Chí Minh là điểm đến chiến lược.</td>
+        <td class="col-3">Công nghệ và sản xuất thu hút FDI, TP. Hồ Chí Minh là trung tâm hợp tác quốc tế.</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <script>
+    function toggleColumn(colNumber) {
+      const cells = document.querySelectorAll(`#dataTable .col-${colNumber}`);
+      const button = document.querySelectorAll('.toggle-btn')[colNumber === 1 ? 0 : 1];
+      const outlineCells = document.querySelectorAll('#dataTable .col-2');
+      const isHidden = cells[0].classList.contains('hidden');
+
+      // Ẩn/hiện cột được chọn
+      cells.forEach(cell => {
+        if (isHidden) {
+          cell.classList.remove('hidden');
+        } else {
+          cell.classList.add('hidden');
+        }
+      });
+
+      // Cập nhật trạng thái nút
+      button.textContent = isHidden 
+        ? `Hiện Cột ${colNumber === 1 ? 'Câu Hỏi' : 'Câu Trả Lời'}`
+        : `Ẩn Cột ${colNumber === 1 ? 'Câu Hỏi' : 'Câu Trả Lời'}`;
+
+      // Kiểm tra trạng thái cả hai cột để làm nổi cột 2
+      updateHighlight();
+    }
+
+    function toggleBothColumns() {
+      const col1Cells = document.querySelectorAll('#dataTable .col-1');
+      const col3Cells = document.querySelectorAll('#dataTable .col-3');
+      const button = document.querySelectorAll('.toggle-btn')[2];
+      const isHidden = col1Cells[0].classList.contains('hidden') && col3Cells[0].classList.contains('hidden');
+
+      // Ẩn/hiện cả hai cột
+      col1Cells.forEach(cell => {
+        if (isHidden) {
+          cell.classList.remove('hidden');
+        } else {
+          cell.classList.add('hidden');
+        }
+      });
+      col3Cells.forEach(cell => {
+        if (isHidden) {
+          cell.classList.remove('hidden');
+        } else {
+          cell.classList.add('hidden');
+        }
+      });
+
+      // Cập nhật trạng thái nút
+      button.textContent = isHidden ? 'Hiện Cả Hai Cột' : 'Ẩn Cả Hai Cột';
+
+      // Cập nhật trạng thái các nút riêng lẻ
+      document.querySelectorAll('.toggle-btn')[0].textContent = isHidden ? 'Hiện Cột Câu Hỏi' : 'Ẩn Cột Câu Hỏi';
+      document.querySelectorAll('.toggle-btn')[1].textContent = isHidden ? 'Hiện Cột Câu Trả Lời' : 'Ẩn Cột Câu Trả Lời';
+
+      // Kiểm tra trạng thái cả hai cột để làm nổi cột 2
+      updateHighlight();
+    }
+
+    function updateHighlight() {
+      const outlineCells = document.querySelectorAll('#dataTable .col-2');
+      const col1Hidden = document.querySelector('.col-1').classList.contains('hidden');
+      const col3Hidden = document.querySelector('.col-3').classList.contains('hidden');
+      outlineCells.forEach(cell => {
+        if (col1Hidden && col3Hidden) {
+          cell.classList.add('highlight');
+        } else {
+          cell.classList.remove('highlight');
+        }
+      });
+    }
+  </script>
+</body>
+</html>
